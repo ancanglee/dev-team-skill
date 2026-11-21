@@ -1,6 +1,6 @@
 # dev-team 使用手册
 
-一套给 AI 编程工具用的虚拟研发团队。九个角色分工，按阶段推进软件项目，支持多个子 agent 并发。参考实现是 Claude Code，其他工具见 3.6。
+一套给 AI 编程工具用的虚拟研发团队。九个角色分工，按阶段推进软件项目，支持多个子 agent 并发。新项目从立项开始，已有项目先盘点再迭代。参考实现是 Claude Code，其他工具见 3.6。
 
 这份手册讲三件事：怎么装、怎么用、出问题怎么查。
 
@@ -12,7 +12,8 @@
 - 按需求 → 设计 → 架构 → 开发 → 测试 → 安全 → 交付 → 发布的顺序推进
 - 只在三个节点停下来问你：需求冻结、架构冻结、发布前
 - 能并行的地方并行，比如多个开发同时做不同模块、架构师同时起前端和后端架构子任务
-- 产出统一落在项目的 `docs/` 目录，交付时附一份给人看的手册
+- 已有项目先做现状盘点，再按变更范围迭代，不动原目录结构
+- 产出统一落在项目的文档根（默认 `docs/`，已有项目常用 `docs/dev-team/`），交付时附一份给人看的手册
 
 它不做的：替你拍业务决策、替你接受安全风险、替你 git commit 或部署。
 
@@ -34,7 +35,7 @@ dev-team-skill/
 │   └── red-team.md
 ├── references/
 │   ├── roles-and-scope.md        角色职责、Gate、仲裁、边界的唯一依据
-│   └── templates/                14 份文档模板
+│   └── templates/                16 份文档模板
 └── scripts/
     ├── init-docs.sh              初始化项目的 docs/ 结构
     ├── install.sh                一条命令安装
@@ -122,7 +123,7 @@ Skill 的正文是纯 Markdown，角色职责、阶段、Gate、模板都不依�
 通用接法，四步：
 
 1. 把整个目录放进项目，比如 `.dev-team/`。
-2. 让工具先读入口。在项目根放一个 `AGENTS.md`（Codex 等）或 `.cursor/rules/dev-team.mdc`（Cursor），也可以在会话开头直接说「先读 .dev-team/SKILL.md」。入口里写清三件事：读 `SKILL.md` 和 `references/roles-and-scope.md`；要某个角色时读 `agents/<role>.md`；产出统一写 `docs/`。
+2. 让工具先读入口。在项目根放一个 `AGENTS.md`（Codex 等）或 `.cursor/rules/dev-team.mdc`（Cursor），也可以在会话开头直接说「先读 .dev-team/SKILL.md」。入口里写清三件事：读 `SKILL.md` 和 `references/roles-and-scope.md`；要某个角色时读 `agents/<role>.md`；产出统一写文档根（默认 `docs/`，已有项目用 `docs/dev-team/`）。
 3. 按工具的并发能力分配角色：
    - 有 subagent：把 `agents/*.md` 当每个角色的系统提示，按 SKILL.md 的波次派发。
    - 没有 subagent：一个会话里顺序扮演角色，切换前重读该角色文件。角色之间只通过 `docs/` 下的文件交接，不靠对话记忆。
@@ -134,7 +135,7 @@ Skill 的正文是纯 Markdown，角色职责、阶段、Gate、模板都不依�
 读 .dev-team/SKILL.md 和 .dev-team/references/roles-and-scope.md。
 按 dev-team 的方式推进这个项目：先给我启用提案，等我确认再开工。
 需要某个角色时，读 .dev-team/agents/<role>.md，严格按它的职责、产出和回报格式执行。
-一次只扮演一个角色，角色之间用 docs/ 下的文件交接。
+一次只扮演一个角色，角色之间用文档根下的文件交接。
 ```
 
 两点注意：
@@ -164,7 +165,7 @@ Claude：（更新提案）... 确认后开始。
 
 第一次开工后，它会：
 
-1. 建 `docs/` 目录
+1. 建文档根（新项目 `docs/`，已有项目 `docs/dev-team/`）
 2. 派产品经理写 PRD
 3. 需求冻结时停下来问你
 4. 架构、开发按波次推进
@@ -185,6 +186,15 @@ Claude：（更新提案）... 确认后开始。
 | 发布 | 项目经理 + 你 | 发布说明、回滚预案 | 停（发布前） |
 
 停下来的时候会给你：完成了什么、证据在哪、还有什么没定、残余风险、A/B/C 三个选项。没有你的确认，它不会往下走。
+
+### 已有项目怎么走
+
+多一步盘点，少一点改动：
+
+1. **现状盘点。** 架构师带着测试和安全，读代码、跑构建和测试、核对现有文档，产出 `07-project/audit.md`。只读不写，不动你的目录。
+2. **定文档根。** 项目已有 `docs/` 且结构不同，就把 dev-team 的产出放进 `docs/dev-team/`，原 `docs/` 不动。
+3. **给迭代提案。** 本次做什么、影响哪些模块、怎么验收、怎么回滚，和盘点结论一起确认一次。
+4. **按同一张表推进。** 每个阶段只覆盖变更范围：需求写影响面，架构写增量设计，测试带回归范围。
 
 ## 6. 角色清单
 
@@ -212,6 +222,8 @@ Claude：（更新提案）... 确认后开始。
 
 ## 8. 产出物放在哪
 
+新项目用 `docs/`；已有项目建议 `docs/dev-team/`，下面路径都相对文档根。
+
 ```
 docs/
   01-product/       prd.md  user-flow.md
@@ -220,8 +232,14 @@ docs/
   04-dev/           development-plan.md  tech-debt.md
   05-test/          test-plan.md  cases.md  report.md
   06-security/      threat-model.md  review.md
-  07-project/       charter.md  plan.md  risks.md  decisions.md  status/  reviews/
+  07-project/       charter.md  plan.md  risks.md  decisions.md  audit.md  iteration.md  status/  reviews/
   08-manual/        index.md  overview.md  usage.md  test-manual.md  deployment.md  troubleshooting.md
+```
+
+已有项目初始化：
+
+```bash
+bash scripts/init-docs.sh <项目根> --docs-dir docs/dev-team
 ```
 
 - 每份文档开头写：给谁看、解决什么问题、状态（草案 / 已确认 / 已废弃）。
@@ -273,6 +291,9 @@ Skill 按描述匹配。直接说「用研发团队推进这个项目」，或�
 **Q：安全吗？权限会不会太大？**
 开发、测试、安全、文档这几个角色有 Bash 权限，能执行构建和测试。首次运行时会请求命令权限，逐条看清楚再批。不要把生产凭据放进会话，也不要在没有备份的目录里跑。
 
+**Q：已经有一个项目，目录结构和这个 skill 不一样，要改吗？**
+不用改。它会先读代码、跑构建和测试、盘点现有文档，产出 `07-project/audit.md`；文档放在独立的 `docs/dev-team/`，原目录不移动、不重命名。之后只按本次变更范围迭代。
+
 **Q：能在 Cursor、Codex 或 DeepSeek 这类工具里用吗？**
 能，但安装脚本只覆盖 Claude Code。其他工具按 3.6 的通用接法手动接入；角色文件里的 tools、model 字段要按那个工具的机制改写。
 
@@ -308,3 +329,4 @@ rm ~/.claude/agents/{project-manager,product-manager,interaction-designer,archit
 - 角色的判断是模型判断，不是真正的领域专家。安全结论、合规结论、架构决策，仍然需要人来签字。
 - 交付手册要求实测，agent 在它拿不到的环境里验证不了，会在报告里标出来，最后需要人补。
 - 跨工具使用时，子 agent 并发和自动触发能力取决于宿主工具，不在本 skill 的控制范围内。
+- 已有项目的盘点基于代码和现有文档，历史背景缺失时可能判断错。盘点结论需要你确认一次，之后才开始改。

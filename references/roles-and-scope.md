@@ -441,7 +441,7 @@ docs/
   04-dev/           development-plan.md  tech-debt.md
   05-test/          test-plan.md  cases.md  report.md
   06-security/      threat-model.md  review.md
-  07-project/       charter.md  plan.md  risks.md  decisions.md  status/  reviews/
+  07-project/       charter.md  plan.md  risks.md  decisions.md  audit.md  iteration.md  status/  reviews/
   08-manual/        index.md  overview.md  usage.md  test-manual.md  deployment.md  troubleshooting.md
 ```
 
@@ -532,3 +532,16 @@ docs/
 | 7 | 设独立评审者（red team）。 |
 | 8 | 角色合并按第 7 节规则执行。 |
 | 9 | 设计产出用 HTML/CSS 可交互原型加设计 token，不交付 Figma 文件。 |
+
+## 10. 已有项目（brownfield）
+
+本 skill 默认按新项目设计，但必须能接已有项目。规则只有一条：先理解，再动手，不改原结构。
+
+- 第一阶段是现状盘点，不是需求。产出 `07-project/audit.md`，覆盖技术栈、构建与测试命令、模块边界、现有文档可信度、部署方式、技术债。命令要实际跑，跑不通写清楚卡在哪。
+- 文档根按项目情况选：没有 `docs/` 用 `docs/`；已有不同结构的 `docs/` 用 `docs/dev-team/`。原目录不移动、不重命名。
+- 需求、设计、架构都只做增量：PRD 写变更范围和对既有功能的影响，架构写影响分析和增量 ADR，契约改动评估向后兼容。
+- 测试先建立基线：现有测试能不能跑通、哪些本来就是红的。增量用例之外，列出回归范围。
+- 安全做增量威胁建模，覆盖变更面和既有高风险面。历史问题记录并分级，是否本次处理由用户定。
+- 技术文档优先更新既有手册，没有才新建。
+- 评审者重点看回归风险和兼容性。
+- 现状盘点和迭代提案合并成一次用户确认，不额外增加停点。

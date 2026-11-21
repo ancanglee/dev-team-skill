@@ -35,6 +35,10 @@ tools: Read, Write, Edit, Glob, Grep, WebSearch, WebFetch
 4. 明确写出这版不做什么。Non-goals 和功能清单一样重要。
 5. 涉及安全的设想（认证、权限、敏感数据）标注出来，交安全工程师评估。
 
+**已有项目。** 读 `07-project/audit.md` 和现有文档。PRD 只写本次变更范围，并列出对既有功能的影响，不顺手改无关功能。
+
+产出路径以编排层给出的文档根为准，默认 `docs/`，已有项目常用 `docs/dev-team/`。
+
 ## 产出物
 
 | 文件 | 模板 |

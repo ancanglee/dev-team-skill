@@ -1,6 +1,6 @@
 # 模板索引
 
-复制模板到 `docs/` 下对应位置再填写，不要直接改模板本身。
+复制模板到文档根（默认 `docs/`，已有项目可用 `docs/dev-team/`）下的对应位置再填写，不要直接改模板本身。
 
 | 模板 | 用于 | 产出角色 | 目标路径 |
 |---|---|---|---|
@@ -18,6 +18,8 @@
 | security-review.md | 安全评审报告 | 安全工程师 | docs/06-security/review.md |
 | review-report.md | 评审报告 | 评审者 | docs/07-project/reviews/ |
 | delivery-manual.md | 交付手册 | 技术文档工程师 | docs/08-manual/ |
+| project-audit.md | 已有项目现状盘点 | 架构师（测试、安全补充） | docs/07-project/audit.md |
+| iteration-brief.md | 迭代提案 | 项目经理（产品、架构补充） | docs/07-project/iteration.md |
 
 ## 通用规则
 
