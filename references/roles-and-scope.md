@@ -441,7 +441,7 @@ docs/
   04-dev/           development-plan.md  tech-debt.md
   05-test/          test-plan.md  cases.md  report.md
   06-security/      threat-model.md  review.md
-  07-project/       charter.md  plan.md  risks.md  decisions.md  audit.md  iteration.md  status/  reviews/
+  07-project/       charter.md  plan.md  risks.md  decisions.md  audit.md  iteration.md  blocked.md  status/  reviews/
   08-manual/        index.md  overview.md  usage.md  test-manual.md  deployment.md  troubleshooting.md
 ```
 
@@ -545,3 +545,13 @@ docs/
 - 技术文档优先更新既有手册，没有才新建。
 - 评审者重点看回归风险和兼容性。
 - 现状盘点和迭代提案合并成一次用户确认，不额外增加停点。
+
+## 11. 失败与死循环控制
+
+- 同一动作配同一错误，连续两次即停；第三次必须换方案。
+- 单任务最多 3 次尝试；修 bug 最多 3 轮；评审返工最多 2 轮；连续两次无进展即停。
+- 进展的判定：有新产出、有原本失败的检查转通过、解决了未知、缩小了范围。单纯的重复尝试不算。
+- 卡住时写 `07-project/blocked.md`（模板 `references/templates/blocked-report.md`），说明未完成项、尝试记录、卡点与证据、需要谁决定、可选下一步。
+- 不启动下游依赖任务。下游不得替上游补产出或猜结论。
+- 编排层收到阻塞后直接向用户报告，不用「继续尝试」掩盖。
+- 用户可随时打断，项目经理输出当前状态和下一步选项。

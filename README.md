@@ -13,6 +13,7 @@
 - 只在三个节点停下来问你：需求冻结、架构冻结、发布前
 - 能并行的地方并行，比如多个开发同时做不同模块、架构师同时起前端和后端架构子任务
 - 已有项目先做现状盘点，再按变更范围迭代，不动原目录结构
+- 卡住会主动停：同一错误两次、单任务三次尝试，到线就出阻塞报告，不会无限重试
 - 产出统一落在项目的文档根（默认 `docs/`，已有项目常用 `docs/dev-team/`），交付时附一份给人看的手册
 
 它不做的：替你拍业务决策、替你接受安全风险、替你 git commit 或部署。
@@ -35,7 +36,8 @@ dev-team-skill/
 │   └── red-team.md
 ├── references/
 │   ├── roles-and-scope.md        角色职责、Gate、仲裁、边界的唯一依据
-│   └── templates/                16 份文档模板
+│   ├── loop-control.md           失败预算、重试上限、跳出协议
+│   └── templates/                17 份文档模板
 └── scripts/
     ├── init-docs.sh              初始化项目的 docs/ 结构
     ├── install.sh                一条命令安装
@@ -196,6 +198,10 @@ Claude：（更新提案）... 确认后开始。
 3. **给迭代提案。** 本次做什么、影响哪些模块、怎么验收、怎么回滚，和盘点结论一起确认一次。
 4. **按同一张表推进。** 每个阶段只覆盖变更范围：需求写影响面，架构写增量设计，测试带回归范围。
 
+### 卡住了会怎么样
+
+同一动作配同一个错误，连续两次就停；单任务最多三次尝试，评审返工最多两轮；连续两次没有新进展也算卡住。停下后不会硬撑，会写一份 `07-project/blocked.md`，把未完成项、尝试记录、证据和可选下一步交给你。
+
 ## 6. 角色清单
 
 | 角色 | 什么时候介入 | 主要产出 |
@@ -219,6 +225,7 @@ Claude：（更新提案）... 确认后开始。
 - **改规模**：直接说「这个项目小，别全员上」，它会缩到 2 到 3 个角色。
 - **改停点**：说「架构不用等我确认」，它会照做。要长期改，见第 9 节。
 - **拒绝**：任何 gate 都可以选「修改后重审」。
+- **停掉卡住的任务**：说「停下，出阻塞报告」，它会停止重试并给你选项。
 
 ## 8. 产出物放在哪
 
@@ -232,7 +239,7 @@ docs/
   04-dev/           development-plan.md  tech-debt.md
   05-test/          test-plan.md  cases.md  report.md
   06-security/      threat-model.md  review.md
-  07-project/       charter.md  plan.md  risks.md  decisions.md  audit.md  iteration.md  status/  reviews/
+  07-project/       charter.md  plan.md  risks.md  decisions.md  audit.md  iteration.md  blocked.md  status/  reviews/
   08-manual/        index.md  overview.md  usage.md  test-manual.md  deployment.md  troubleshooting.md
 ```
 
@@ -291,6 +298,9 @@ Skill 按描述匹配。直接说「用研发团队推进这个项目」，或�
 **Q：安全吗？权限会不会太大？**
 开发、测试、安全、文档这几个角色有 Bash 权限，能执行构建和测试。首次运行时会请求命令权限，逐条看清楚再批。不要把生产凭据放进会话，也不要在没有备份的目录里跑。
 
+**Q：会不会陷入死循环？**
+有硬预算：同一动作同一错误连续两次就停，单任务最多三次尝试，评审返工最多两轮，连续两次无进展也算卡住。到线后写 `07-project/blocked.md`，把未完成项和选项交给你，不会无限重试。
+
 **Q：已经有一个项目，目录结构和这个 skill 不一样，要改吗？**
 不用改。它会先读代码、跑构建和测试、盘点现有文档，产出 `07-project/audit.md`；文档放在独立的 `docs/dev-team/`，原目录不移动、不重命名。之后只按本次变更范围迭代。
 
@@ -330,3 +340,4 @@ rm ~/.claude/agents/{project-manager,product-manager,interaction-designer,archit
 - 交付手册要求实测，agent 在它拿不到的环境里验证不了，会在报告里标出来，最后需要人补。
 - 跨工具使用时，子 agent 并发和自动触发能力取决于宿主工具，不在本 skill 的控制范围内。
 - 已有项目的盘点基于代码和现有文档，历史背景缺失时可能判断错。盘点结论需要你确认一次，之后才开始改。
+- 预算是硬约束，但不保证识别所有卡点。发现它在原地打转时，直接叫停。

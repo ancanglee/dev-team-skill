@@ -20,6 +20,7 @@
 | delivery-manual.md | 交付手册 | 技术文档工程师 | docs/08-manual/ |
 | project-audit.md | 已有项目现状盘点 | 架构师（测试、安全补充） | docs/07-project/audit.md |
 | iteration-brief.md | 迭代提案 | 项目经理（产品、架构补充） | docs/07-project/iteration.md |
+| blocked-report.md | 阻塞与未完成报告 | 任何角色 | docs/07-project/blocked.md |
 
 ## 通用规则
 

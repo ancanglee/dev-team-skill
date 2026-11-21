@@ -111,14 +111,15 @@ Agent(
 
 同名 agent 不存在时，用 `general-purpose`，prompt 开头贴上 `agents/<role>.md` 全文，并说明"你现在是这个角色"。
 
-每次 spawn 的 prompt 必须包含六项：
+每次 spawn 的 prompt 必须包含七项：
 
 1. 角色与本次任务
 2. 必读输入（文件路径，含契约）
 3. 产出（文件路径 + 使用的模板）
 4. 约束（只能改哪些文件、不能做什么）
 5. 完成标准（对应角色的 DoD）
-6. 回报格式（产出、验证、偏差、风险）
+6. 回报格式（产出、验证、偏差、风险、阻塞）
+7. 失败预算与停止条件：同一错误连续两次即停，单任务最多三次尝试
 
 子 agent 之间不口头传话，只通过文件交接。下游读不到上游产出时，写进报告的偏差里，不要自己补。
 
@@ -196,7 +197,7 @@ docs/
   04-dev/           development-plan.md  tech-debt.md
   05-test/          test-plan.md  cases.md  report.md
   06-security/      threat-model.md  review.md
-  07-project/       charter.md  plan.md  risks.md  decisions.md  audit.md  iteration.md  status/  reviews/
+  07-project/       charter.md  plan.md  risks.md  decisions.md  audit.md  iteration.md  blocked.md  status/  reviews/
   08-manual/        index.md  overview.md  usage.md  test-manual.md  deployment.md  troubleshooting.md
 ```
 
@@ -227,10 +228,28 @@ docs/
 - 不自动 git commit 或 push，除非用户要求。
 - 不做用户没要求的发布、部署或外发动作。
 
-## 10. 每波结束的自检
+## 10. 失败、重试与跳出
+
+完整规则见 `references/loop-control.md`。三条硬规则：
+
+1. 同一动作配同一错误，连续两次就停。第三次必须换方案，否则按死循环处理。
+2. 单任务最多 3 次尝试；修 bug 最多 3 轮；评审返工最多 2 轮。到线就停。
+3. 连续两次没有新产出、没有新增通过项、没有解决未知，算没有进展，停。
+
+停下时做四件事：
+
+- 不启动依赖该任务的下游角色。
+- 写阻塞报告到 `<文档根>/07-project/blocked.md`，模板 `references/templates/blocked-report.md`。
+- 向用户显式报告：哪项没完成、试过什么、卡在哪、需要谁决定、有哪些选项。
+- 把阻塞项写进状态报告和未完成清单，不要藏在总结里。
+
+禁止用「继续尝试」代替停止，也禁止把失败说成基本完成。下游角色不得替上游补产出或猜结论。
+
+## 11. 每波结束的自检
 
 - 产出文件存在，符合模板，有状态标记
 - 契约没被未经批准地改动
 - 每个未完成项都有 owner 和下一步
+- 没有静默失败：未完成项要么有 owner，要么已写进 blocked.md
 - 需要用户决策的事项已经列出来，没有被静默跳过
 - 已有项目：原目录结构没被动过，现有构建和测试跑通
