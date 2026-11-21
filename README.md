@@ -21,7 +21,7 @@
 ```
 dev-team-skill/
 ├── SKILL.md                      编排入口：启动、波次、Gate、产出规范
-├── MANUAL.md                     本文件
+├── README.md                     本文件
 ├── agents/                       九个角色定义
 │   ├── project-manager.md
 │   ├── product-manager.md
