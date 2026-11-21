@@ -27,6 +27,8 @@ dev-team-skill/
 ├── SKILL.md                      编排入口：启动、波次、Gate、产出规范
 ├── README.md                     英文说明（GitHub 默认展示）
 ├── README.zh-CN.md               本文件（中文）
+├── LICENSE                       Apache License 2.0
+├── NOTICE                        版权归属声明
 ├── agents/                       九个角色定义
 │   ├── project-manager.md
 │   ├── product-manager.md
@@ -344,3 +346,7 @@ rm ~/.claude/agents/{project-manager,product-manager,interaction-designer,archit
 - 跨工具使用时，子 agent 并发和自动触发能力取决于宿主工具，不在本 skill 的控制范围内。
 - 已有项目的盘点基于代码和现有文档，历史背景缺失时可能判断错。盘点结论需要你确认一次，之后才开始改。
 - 预算是硬约束，但不保证识别所有卡点。发现它在原地打转时，直接叫停。
+
+## 协议
+
+Apache License 2.0，见 [LICENSE](LICENSE) 与 [NOTICE](NOTICE)。

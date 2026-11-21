@@ -27,6 +27,8 @@ dev-team-skill/
 ├── SKILL.md                      Orchestration entry: kickoff, waves, gates, output rules
 ├── README.md                     This file (English)
 ├── README.zh-CN.md               Chinese version
+├── LICENSE                       Apache License 2.0
+├── NOTICE                        Attribution notice
 ├── agents/                       Nine role definitions
 │   ├── project-manager.md
 │   ├── product-manager.md
@@ -344,3 +346,7 @@ rm ~/.claude/agents/{project-manager,product-manager,interaction-designer,archit
 - In other tools, subagent parallelism and auto-triggering depend on the host. Outside this skill's control.
 - The audit of an existing project is based on code and current docs. Missing history can lead to wrong conclusions. Confirm the audit once before changes begin.
 - Budgets are hard limits but don't catch every dead end. If you see it spinning in place, call a stop.
+
+## License
+
+Apache License 2.0. See [LICENSE](LICENSE) and [NOTICE](NOTICE).
