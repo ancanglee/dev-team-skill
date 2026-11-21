@@ -1,30 +1,33 @@
-# dev-team 使用手册
+# dev-team
 
-一套给 AI 编程工具用的虚拟研发团队。九个角色分工，按阶段推进软件项目，支持多个子 agent 并发。新项目从立项开始，已有项目先盘点再迭代。参考实现是 Claude Code，其他工具见 3.6。
+**English** | [中文](README.zh-CN.md)
 
-这份手册讲三件事：怎么装、怎么用、出问题怎么查。
+A virtual R&D team for AI coding tools. Nine roles, a staged process for software projects, and multiple subagents running in parallel. New projects start at kickoff; existing projects get audited first. The reference implementation is Claude Code — other tools are covered in section 3.6.
 
-## 1. 它能做什么
+This guide covers install, usage, and troubleshooting.
 
-你把一个研发任务交给它，它会：
+## 1. What it does
 
-- 先给你一页提案（目标、范围、角色、阶段、产出），你确认后才开工
-- 按需求 → 设计 → 架构 → 开发 → 测试 → 安全 → 交付 → 发布的顺序推进
-- 只在三个节点停下来问你：需求冻结、架构冻结、发布前
-- 能并行的地方并行，比如多个开发同时做不同模块、架构师同时起前端和后端架构子任务
-- 已有项目先做现状盘点，再按变更范围迭代，不动原目录结构
-- 卡住会主动停：同一错误两次、单任务三次尝试，到线就出阻塞报告，不会无限重试
-- 产出统一落在项目的文档根（默认 `docs/`，已有项目常用 `docs/dev-team/`），交付时附一份给人看的手册
+Hand it a development task and it will:
 
-它不做的：替你拍业务决策、替你接受安全风险、替你 git commit 或部署。
+- Give you a one-page proposal first (goal, scope, roles, phases, deliverables). Nothing starts until you confirm.
+- Move through requirements → design → architecture → development → testing → security → delivery → release.
+- Stop for you at three points only: requirements freeze, architecture freeze, pre-release.
+- Parallelize where it can. Several developers on different modules, or the architect running front-end and back-end architecture subtasks at once.
+- For an existing project, audit what's there before changing anything, then iterate within the change scope without touching the original directory layout.
+- Stop itself when stuck. Same error twice, or three attempts on one task, and it writes a blocked report rather than retrying forever.
+- Write deliverables to the project's docs root (`docs/` by default; existing projects often use `docs/dev-team/`), and hand over a human-facing manual at delivery.
 
-## 2. 目录结构
+What it won't do: make business decisions for you, accept security risk on your behalf, or run git commit and deploy.
+
+## 2. Layout
 
 ```
 dev-team-skill/
-├── SKILL.md                      编排入口：启动、波次、Gate、产出规范
-├── README.md                     本文件
-├── agents/                       九个角色定义
+├── SKILL.md                      Orchestration entry: kickoff, waves, gates, output rules
+├── README.md                     This file (English)
+├── README.zh-CN.md               Chinese version
+├── agents/                       Nine role definitions
 │   ├── project-manager.md
 │   ├── product-manager.md
 │   ├── interaction-designer.md
@@ -35,201 +38,201 @@ dev-team-skill/
 │   ├── tech-writer.md
 │   └── red-team.md
 ├── references/
-│   ├── roles-and-scope.md        角色职责、Gate、仲裁、边界的唯一依据
-│   ├── loop-control.md           失败预算、重试上限、跳出协议
-│   └── templates/                17 份文档模板
+│   ├── roles-and-scope.md        Single source of truth for role scope, gates, arbitration, boundaries
+│   ├── loop-control.md           Failure budgets, retry caps, breakout protocol
+│   └── templates/                17 document templates
 └── scripts/
-    ├── init-docs.sh              初始化项目的 docs/ 结构
-    ├── install.sh                一条命令安装
-    └── uninstall.sh              一条命令卸载
+    ├── init-docs.sh              Set up the docs/ skeleton in a project
+    ├── install.sh                One-command install
+    └── uninstall.sh              One-command uninstall
 ```
 
-## 3. 安装
+## 3. Install
 
-### 3.1 前置条件
+### 3.1 Prerequisites
 
-- Claude Code（CLI、桌面端或 IDE 插件都行）。这是参考实现，用其他工具见 3.6
+- Claude Code, as CLI, desktop app, or IDE extension. This is the reference implementation; section 3.6 covers other tools.
 - bash
-- 项目本身有 git 更好，没有也不影响
+- git in the target project is better, but not required.
 
-### 3.2 用户级安装（所有项目可用）
+### 3.2 User-level install (available in every project)
 
-在 skill 目录下执行：
+From the skill directory:
 
 ```bash
 bash scripts/install.sh
 ```
 
-它做两件事：把 skill 链接到 `~/.claude/skills/dev-team`，把九个角色链接到 `~/.claude/agents/`。已经装过的会跳过，不会重复。
+It does two things: links the skill to `~/.claude/skills/dev-team` and the nine roles to `~/.claude/agents/`. Anything already installed is skipped, not duplicated.
 
-从别的位置调用时用相对路径，例如（路径按你实际存放位置调整）：
+To run it from elsewhere, use a relative path (adjust to where you actually keep the directory):
 
 ```bash
 bash ../dev-team-skill/scripts/install.sh
 ```
 
-脚本按自己被调用的位置推算 skill 目录，不需要你填路径。安装生成的是指向该目录的软链接；以后移动了 skill 目录，重跑一次安装即可。
+The script derives the skill directory from its own location, so you don't pass a path. What it creates are symlinks into that directory. If you move the skill directory later, rerun the install.
 
-重复执行是安全的。遇到同名文件或指向别处的链接，脚本会跳过并提示，不会覆盖你的东西。
+Running it again is safe. If a file or a link to somewhere else already has the same name, the script skips it and says so. It won't overwrite your files.
 
-### 3.3 项目级安装（只对这个项目生效）
+### 3.3 Project-level install (this project only)
 
-两种写法，按当前所在位置选一种。
+Two forms. Pick the one that matches where you are.
 
-在 skill 目录里，指定项目路径：
+From the skill directory, name the project:
 
 ```bash
 bash scripts/install.sh --project ../my-project
 ```
 
-不写目录时默认装到当前目录：
+Or install into the current directory:
 
 ```bash
 cd ../my-project
 bash ../dev-team-skill/scripts/install.sh --project
 ```
 
-上面的 `../my-project` 和 `../dev-team-skill` 只是示例，按实际目录名调整。
+The `../my-project` and `../dev-team-skill` above are examples; use your real directory names.
 
-会生成 `<项目>/.claude/skills/dev-team` 和 `<项目>/.claude/agents/`。适合团队共用：把 `.claude/` 和 skill 目录一起提交，成员 clone 下来就能用。skill 目录在不同机器上路径可能不同，团队里最好放进仓库或用固定路径。
+This creates `<project>/.claude/skills/dev-team` and `<project>/.claude/agents/`. Good for teams sharing one setup: commit both `.claude/` and the skill directory, and everyone who clones it is ready. Skill directories can live at different paths on different machines, so putting it in the repo or at a fixed path is your best bet.
 
-### 3.4 验证
+### 3.4 Verify
 
-1. 重开 Claude Code。
-2. 输入 `/agents`，应该能看到九个角色。
-3. 说一句「用研发团队帮我做个待办事项应用」，它应该先给提案，而不是直接写代码。
+1. Restart Claude Code.
+2. Type `/agents`. You should see all nine roles.
+3. Say "use the dev-team to build me a todo app". It should hand you a proposal first, not start writing code.
 
-只装了 skill、没装 agents 也能用：编排层会退回 `general-purpose`，把角色说明贴进 prompt。区别是没有独立的工具限制和描述，并发调度也更粗。
+Skill-only works too, without the agents. The orchestration layer falls back to `general-purpose` and pastes the role definition into the prompt. The difference is no separate tool restrictions or descriptions, and coarser parallel scheduling.
 
-### 3.5 在另一台机器上安装
+### 3.5 Installing on another machine
 
-把整个目录复制过去，进入目录执行同一个脚本：
+Copy the whole directory over, enter it, and run the same script:
 
 ```bash
-cd dev-team-skill   # 换成你实际的目录名
+cd dev-team-skill   # use your actual directory name
 bash scripts/install.sh
 ```
 
-### 3.6 在其他工具里使用（Codex、Cursor、DeepSeek 等）
+### 3.6 Using it in other tools (Codex, Cursor, DeepSeek, and friends)
 
-Skill 的正文是纯 Markdown，角色职责、阶段、Gate、模板都不依赖 Claude Code。Claude Code 只是参考实现，安装脚本也只覆盖它的目录。换到别的 harness，先分清哪些能带走：
+The skill is plain Markdown. Role scope, phases, gates, and templates don't depend on Claude Code. Claude Code is just the reference implementation, and the install scripts only cover its directories. Moving to another harness starts with knowing what travels:
 
-| 部分 | 能不能带走 | 说明 |
+| Part | Portable? | Notes |
 |---|---|---|
-| 角色定义、流程、模板、职责规范 | 能 | 纯文本，任何能读文件的工具都能用 |
-| 自动触发、`/dev-team` 命令 | 看工具 | 没有 skill 机制的，把 SKILL.md 写进项目指令或系统提示 |
-| 多角色并发 | 看工具 | 支持 subagent 的按角色拆分；不支持的，一个会话里顺序扮演 |
-| agent frontmatter（tools、model） | 不能 | 这是 Claude Code 的格式，其他工具会忽略，需要按各自机制改写 |
-| install / uninstall 脚本 | 不能 | 只处理 `~/.claude` 和项目的 `.claude/` |
+| Role definitions, process, templates, scope rules | Yes | Plain text; any tool that can read files can use them |
+| Auto-trigger, `/dev-team` command | Depends on the tool | Without a skill mechanism, put SKILL.md in the project instructions or system prompt |
+| Multi-role parallelism | Depends on the tool | If it has subagents, split by role; if not, play the roles sequentially in one session |
+| Agent frontmatter (tools, model) | No | Claude Code's format; other tools ignore it, so rewrite it per tool |
+| install / uninstall scripts | No | They only handle `~/.claude` and the project's `.claude/` |
 
-通用接法，四步：
+The generic wiring is four steps:
 
-1. 把整个目录放进项目，比如 `.dev-team/`。
-2. 让工具先读入口。在项目根放一个 `AGENTS.md`（Codex 等）或 `.cursor/rules/dev-team.mdc`（Cursor），也可以在会话开头直接说「先读 .dev-team/SKILL.md」。入口里写清三件事：读 `SKILL.md` 和 `references/roles-and-scope.md`；要某个角色时读 `agents/<role>.md`；产出统一写文档根（默认 `docs/`，已有项目用 `docs/dev-team/`）。
-3. 按工具的并发能力分配角色：
-   - 有 subagent：把 `agents/*.md` 当每个角色的系统提示，按 SKILL.md 的波次派发。
-   - 没有 subagent：一个会话里顺序扮演角色，切换前重读该角色文件。角色之间只通过 `docs/` 下的文件交接，不靠对话记忆。
-4. Gate、停点、产出结构照旧，这些跟工具无关。
+1. Put the whole directory into the project, e.g. `.dev-team/`.
+2. Tell the tool to read the entry point. Either add an `AGENTS.md` at the project root (Codex and similar) or `.cursor/rules/dev-team.mdc` (Cursor), or just say "read .dev-team/SKILL.md first" at the start of a session. The entry point needs three things: read `SKILL.md` and `references/roles-and-scope.md`; read `agents/<role>.md` when a role is needed; write outputs to the docs root (`docs/` by default, `docs/dev-team/` for existing projects).
+3. Assign roles according to the tool's concurrency:
+   - With subagents: treat `agents/*.md` as each role's system prompt and dispatch waves as SKILL.md describes.
+   - Without them: play the roles one at a time in a single session and reread the role file before switching. Roles hand off through files under the docs root, not through conversational memory.
+4. Gates, stop points, and output structure stay as they are. None of that depends on the tool.
 
-启动指令可以直接复制：
-
-```
-读 .dev-team/SKILL.md 和 .dev-team/references/roles-and-scope.md。
-按 dev-team 的方式推进这个项目：先给我启用提案，等我确认再开工。
-需要某个角色时，读 .dev-team/agents/<role>.md，严格按它的职责、产出和回报格式执行。
-一次只扮演一个角色，角色之间用文档根下的文件交接。
-```
-
-两点注意：
-
-- Codex、Cursor、DeepSeek harness 对子 agent、规则文件和斜杠命令的支持各不相同，版本之间也会变。本手册保证内容可移植，具体接入以当前工具文档为准，不要假设 `agents/*.md` 会被自动识别。
-- 并发能力差异最大。没有 subagent 的工具只能串行，波次需要一个个手动推进，成本高一些，流程和产出不变。
-
-## 4. 第一次使用
+A startup prompt you can copy:
 
 ```
-你：用 dev-team 帮我做一个团队周报系统。
-
-Claude：
-【启用提案】
-目标：让 5 到 10 人的团队每周提交和查看周报
-范围：做 提交、查看、提醒；不做 权限体系、移动端
-角色：项目经理、产品经理、架构师、开发、测试、技术文档
-阶段：需求 → 设计 → 架构 → 开发 → 测试 → 交付 → 发布
-停点：需求冻结、架构冻结、发布前
-产出：docs/ 下的 PRD、架构、测试报告、交付手册
-风险：周报数据敏感，需要安全评审；提醒功能依赖第三方服务
-
-你：确认，但要加安全评审，做权限体系。
-
-Claude：（更新提案）... 确认后开始。
+Read .dev-team/SKILL.md and .dev-team/references/roles-and-scope.md.
+Run this project the dev-team way: give me the kickoff proposal first, and wait for my confirmation before starting.
+When a role is needed, read .dev-team/agents/<role>.md and follow its scope, outputs, and report format exactly.
+Play one role at a time, and hand off between roles through files under the docs root.
 ```
 
-第一次开工后，它会：
+Two caveats:
 
-1. 建文档根（新项目 `docs/`，已有项目 `docs/dev-team/`）
-2. 派产品经理写 PRD
-3. 需求冻结时停下来问你
-4. 架构、开发按波次推进
-5. 最后交一份 `docs/08-manual/` 给人看的手册
+- Support for subagents, rule files, and slash commands varies across Codex, Cursor, and DeepSeek harnesses, and shifts between versions. This guide guarantees the content is portable; the actual wiring follows whatever the current tool documents. Don't assume `agents/*.md` will be picked up automatically.
+- Concurrency is where the difference bites hardest. Tools without subagents can only go serially, so waves have to be pushed along by hand. More effort, same process and outputs.
 
-## 5. 一次项目会怎么推进
+## 4. First run
 
-| 阶段 | 谁主导 | 产出 | 停不停 |
+```
+You: Use dev-team to build me a team weekly-report system.
+
+Claude:
+【Kickoff proposal】
+Goal: let a 5–10 person team submit and read weekly reports
+Scope: build submit, view, remind; skip the permission system and mobile
+Roles: project manager, product manager, architect, developer, tester, tech writer
+Phases: requirements → design → architecture → development → testing → delivery → release
+Stop points: requirements freeze, architecture freeze, pre-release
+Deliverables: PRD, architecture, test report, delivery manual under docs/
+Risks: weekly reports carry sensitive data, so a security review is needed; the reminder feature depends on a third-party service
+
+You: Confirmed, but add a security review and build the permission system.
+
+Claude: (updates the proposal) ... starts after you confirm.
+```
+
+Once work starts, it will:
+
+1. Create the docs root (`docs/` for a new project, `docs/dev-team/` for an existing one)
+2. Dispatch the product manager to write the PRD
+3. Stop and ask you at requirements freeze
+4. Move architecture and development forward in waves
+5. Hand over a human-facing manual in `docs/08-manual/`
+
+## 5. How a project moves
+
+| Phase | Lead | Output | Stops? |
 |---|---|---|---|
-| 立项 | 项目经理 | 项目章程 | 自动 |
-| 需求 | 产品经理 | PRD、验收标准、NFR | 停（需求冻结） |
-| 设计 | 交互设计师 | 交互流程、原型、状态矩阵 | 自动 |
-| 架构 | 架构师 | 架构文档、接口契约、模块拆分 | 停（架构冻结） |
-| 开发 | 开发工程师 | 代码、单测、自测记录 | 自动 |
-| 测试 | 测试工程师 | 测试报告、缺陷分级 | 自动 |
-| 安全 | 安全工程师 | 安全报告、高危清零 | 自动，高危即停 |
-| 交付 | 技术文档工程师 | 交付手册、部署与排障手册 | 自动 |
-| 发布 | 项目经理 + 你 | 发布说明、回滚预案 | 停（发布前） |
+| Kickoff | Project manager | Project charter | Auto |
+| Requirements | Product manager | PRD, acceptance criteria, NFRs | Stop (requirements freeze) |
+| Design | Interaction designer | Flows, prototype, state matrix | Auto |
+| Architecture | Architect | Architecture doc, interface contracts, module split | Stop (architecture freeze) |
+| Development | Developers | Code, unit tests, self-test notes | Auto |
+| Testing | Test engineer | Test report, defect severity | Auto |
+| Security | Security engineer | Security report, high-severity issues cleared | Auto; stops on any high-severity finding |
+| Delivery | Tech writer | Delivery, deployment, and troubleshooting manuals | Auto |
+| Release | Project manager + you | Release notes, rollback plan | Stop (pre-release) |
 
-停下来的时候会给你：完成了什么、证据在哪、还有什么没定、残余风险、A/B/C 三个选项。没有你的确认，它不会往下走。
+At a stop point you get: what's done, where the evidence is, what's still open, residual risk, and three options A/B/C. It won't move on without your confirmation.
 
-### 已有项目怎么走
+### Existing projects
 
-多一步盘点，少一点改动：
+One extra step of audit up front, fewer changes afterward:
 
-1. **现状盘点。** 架构师带着测试和安全，读代码、跑构建和测试、核对现有文档，产出 `07-project/audit.md`。只读不写，不动你的目录。
-2. **定文档根。** 项目已有 `docs/` 且结构不同，就把 dev-team 的产出放进 `docs/dev-team/`，原 `docs/` 不动。
-3. **给迭代提案。** 本次做什么、影响哪些模块、怎么验收、怎么回滚，和盘点结论一起确认一次。
-4. **按同一张表推进。** 每个阶段只覆盖变更范围：需求写影响面，架构写增量设计，测试带回归范围。
+1. **Audit.** The architect, with testing and security, reads the code, runs the build and tests, and checks existing docs. Output goes to `07-project/audit.md`. Read-only: your directories stay untouched.
+2. **Pick the docs root.** If the project already has a `docs/` with a different structure, dev-team output goes to `docs/dev-team/` and the original `docs/` is left alone.
+3. **Iteration proposal.** What this round does, which modules it touches, how it's accepted, how it rolls back — confirmed once, together with the audit findings.
+4. **Same table from there.** Each phase covers only the change scope: requirements describe the impact surface, architecture covers the delta, testing carries a regression scope.
 
-### 卡住了会怎么样
+### When it gets stuck
 
-同一动作配同一个错误，连续两次就停；单任务最多三次尝试，评审返工最多两轮；连续两次没有新进展也算卡住。停下后不会硬撑，会写一份 `07-project/blocked.md`，把未完成项、尝试记录、证据和可选下一步交给你。
+The same action producing the same error twice stops it. One task gets at most three attempts, review rework at most two rounds, and two consecutive rounds without progress also count as stuck. It doesn't push through — it writes `07-project/blocked.md` with unfinished items, attempts made, evidence, and the options it sees, and hands that to you.
 
-## 6. 角色清单
+## 6. Roles
 
-| 角色 | 什么时候介入 | 主要产出 |
+| Role | When it joins | Main outputs |
 |---|---|---|
-| 项目经理 | 全程 | 章程、计划、风险、状态报告、决策记录 |
-| 产品经理 | 需求阶段，后续处理变更 | PRD、验收标准、Non-goals |
-| 交互设计师 | 需求冻结后 | 交互流程、状态矩阵、HTML/CSS 原型、设计 token |
-| 架构师 | 需求冻结后，兼 tech owner 和 code review 主审 | 架构文档、ADR、接口契约、模块划分、评审结论 |
-| 开发工程师 | 契约冻结后，可多实例并行 | 代码、单测、模块说明 |
-| 测试工程师 | 需求冻结后（用例与开发并行） | 测试计划、用例、自动化测试、测试报告 |
-| 安全工程师 | 架构阶段就介入 | 威胁模型、安全评审、发布检查 |
-| 技术文档工程师 | 交付阶段 | 交付手册、使用、测试、部署、排障五份文档 |
-| 评审者 | 三个关键节点 | 评审报告、关键假设清单 |
+| Project manager | Throughout | Charter, plan, risks, status reports, decision log |
+| Product manager | Requirements, and later change requests | PRD, acceptance criteria, non-goals |
+| Interaction designer | After requirements freeze | User flows, state matrix, HTML/CSS prototype, design tokens |
+| Architect | After requirements freeze; also tech owner and lead code reviewer | Architecture doc, ADRs, interface contracts, module boundaries, review verdicts |
+| Developer | After contracts freeze; multiple instances in parallel | Code, unit tests, module notes |
+| Test engineer | After requirements freeze (test cases run alongside development) | Test plan, cases, automation, test report |
+| Security engineer | Joins at the architecture phase | Threat model, security reviews, release checks |
+| Tech writer | Delivery phase | Five docs: delivery, usage, testing, deployment, troubleshooting |
+| Red team | Three key checkpoints | Review reports, list of unverified assumptions |
 
-角色可以按项目规模合并，规则在 `references/roles-and-scope.md` 第 7 节。合并的红线只有三条：开发不能给自己验收，拆模块的人不能独占集成验收，评审者必须独立。
+Roles can be merged for smaller projects. The rules are in section 7 of `references/roles-and-scope.md`. Three lines can't be crossed: developers can't accept their own work, whoever splits the modules can't also own the integration acceptance, and the red team stays independent.
 
-## 7. 你的控制权
+## 7. What you control
 
-- **停点**：需求冻结、架构冻结、发布前。其余节点自动流转，结果写文档，你事后可以翻。
-- **随时打断**：说「暂停」会输出当前状态和下一步；说「换角色」会调整分工。
-- **改规模**：直接说「这个项目小，别全员上」，它会缩到 2 到 3 个角色。
-- **改停点**：说「架构不用等我确认」，它会照做。要长期改，见第 9 节。
-- **拒绝**：任何 gate 都可以选「修改后重审」。
-- **停掉卡住的任务**：说「停下，出阻塞报告」，它会停止重试并给你选项。
+- **Stop points**: requirements freeze, architecture freeze, pre-release. Everything else flows automatically, with results written to docs you can read later.
+- **Interrupt any time**: "pause" prints the current state and next step; "switch roles" reassigns work.
+- **Change the scale**: say "this is a small project, don't bring everyone" and it drops to 2–3 roles.
+- **Change the stop points**: say "no need to wait for me at architecture" and it complies. For a lasting change, see section 9.
+- **Reject**: every gate has a "revise and re-review" option.
+- **Kill a stuck task**: say "stop, write a blocked report" and it stops retrying and gives you options.
 
-## 8. 产出物放在哪
+## 8. Where outputs go
 
-新项目用 `docs/`；已有项目建议 `docs/dev-team/`，下面路径都相对文档根。
+`docs/` for new projects; `docs/dev-team/` is recommended for existing ones. Paths below are relative to the docs root.
 
 ```
 docs/
@@ -243,101 +246,101 @@ docs/
   08-manual/        index.md  overview.md  usage.md  test-manual.md  deployment.md  troubleshooting.md
 ```
 
-已有项目初始化：
+Initialize an existing project:
 
 ```bash
-bash scripts/init-docs.sh <项目根> --docs-dir docs/dev-team
+bash scripts/init-docs.sh <project-root> --docs-dir docs/dev-team
 ```
 
-- 每份文档开头写：给谁看、解决什么问题、状态（草案 / 已确认 / 已废弃）。
-- 流程图、架构图用 Mermaid 写在文档里，能随代码一起 review。
-- 目录结构可以用 `bash scripts/init-docs.sh <项目根>` 初始化，脚本不覆盖已有文件。
+- Start each document with: who reads it, what problem it solves, and status (draft / confirmed / deprecated).
+- Flow, architecture, and state diagrams go in the doc as Mermaid, so they get reviewed with the code.
+- You can create the directory structure with `bash scripts/init-docs.sh <project-root>`. The script never overwrites existing files.
 
-## 9. 自定义
+## 9. Customizing
 
-| 想改什么 | 改哪里 | 注意 |
+| What you want to change | Where | Watch out |
 |---|---|---|
-| 角色职责 | `references/roles-and-scope.md` 和 `agents/<role>.md` | 两处要同步，前者是依据，后者是执行 |
-| 编排流程、波次、Gate | `SKILL.md` | 不要在 SKILL.md 里重新定义职责，指回角色文件 |
-| 文档模板 | `references/templates/` | 改完检查 SKILL.md 和 agent 文件里的路径 |
-| 语言 | `SKILL.md` 第 8 节和各 agent 文件 | 文档语言、代码注释语言分别说明 |
-| 停点 | `SKILL.md` 第 5 节 | 停点少了风险大，多了效率低 |
-| 目录结构 | `scripts/init-docs.sh`、`SKILL.md` 第 6 节、模板索引 | 三处一起改 |
+| Role scope | `references/roles-and-scope.md` and `agents/<role>.md` | Keep both in sync; the former is the authority, the latter is execution |
+| Orchestration, waves, gates | `SKILL.md` | Don't redefine scope in SKILL.md; point back to the role files |
+| Document templates | `references/templates/` | After editing, check the paths referenced in SKILL.md and the agent files |
+| Language | Section 8 of `SKILL.md` and each agent file | Doc language and code-comment language are specified separately |
+| Stop points | Section 5 of `SKILL.md` | Fewer stops, more risk; more stops, less throughput |
+| Directory structure | `scripts/init-docs.sh`, section 6 of `SKILL.md`, template index | Change all three together |
 
-升级：skill 目录是软链接，改完文件立即生效，重开会话即可。如果你改过角色文件，记得留一份自己的版本，避免以后覆盖。
+Upgrading: the skill directory is a symlink, so file edits take effect immediately. Restart the session. If you've customized role files, keep your own copy somewhere to avoid losing it in a future update.
 
-## 10. 常见问题
+## 10. FAQ
 
-**Q：为什么没有自动触发？**
-Skill 按描述匹配。直接说「用研发团队推进这个项目」，或者输入 `/dev-team`。
+**Q: Why didn't it trigger automatically?**
+Skills match on their description. Say "run this project with the dev-team", or type `/dev-team`.
 
-**Q：一个小改动也要九个角色？**
-不需要。它会先判规模，你也可以直接说小项目，只留必要的角色。
+**Q: Does a small change really need nine roles?**
+No. It judges the scale first, and you can say it's a small project and keep only what's needed.
 
-**Q：只想让某个角色干活？**
-直接点名：「用架构师评审这个设计」。不需要走完整流程。
+**Q: I just want one role to do something.**
+Name it: "have the architect review this design". No need to run the whole process.
 
-**Q：角色 agent 没生效？**
-检查 `ls ~/.claude/agents/`，确认九个文件都在且软链接没断（`readlink` 能看到真实路径），然后重开 Claude Code。没装 agent 时 skill 会退回 `general-purpose`，能用但没那么严格。
+**Q: The role agents aren't working.**
+Check `ls ~/.claude/agents/` — all nine files should be there and the symlinks intact (`readlink` shows the real path). Then restart Claude Code. Without the agents, the skill falls back to `general-purpose`: usable, less strict.
 
-**Q：多个 agent 改同一个文件冲突了？**
-编排层用单写者规则预防：同一个文件同一时刻只有一个 agent 写，共享文件由 owner 统一改。如果还是冲突，说明模块边界没切干净，找架构师重划。
+**Q: Multiple agents changed the same file and conflicted.**
+The orchestration layer prevents this with a single-writer rule: one agent writes a given file at a time, and shared files are edited by their owner. If conflicts still happen, the module boundaries were cut badly — have the architect redraw them.
 
-**Q：项目里已经有 docs/ 怎么办？**
-初始化脚本不覆盖已有文件。已有目录可以直接复用；如果命名不同，告诉 Claude 按现有结构走。
+**Q: The project already has a docs/ directory.**
+The init script doesn't overwrite existing files. You can reuse the directory; if the naming differs, tell Claude to follow the existing structure.
 
-**Q：token 花得太多？**
-并发是有成本的。让它缩小规模、减少角色，或者指定只跑某个阶段。小项目别开全量评审。
+**Q: Token usage is high.**
+Parallelism costs money. Shrink the scale, use fewer roles, or run just one phase. Skip the full review on small projects.
 
-**Q：交付手册和代码不一致？**
-手册要求每步都实际验证。发现不一致，让技术文档工程师重跑对应步骤；如果代码行为本身有问题，转给对应的 owner，不要直接改手册糊过去。
+**Q: The delivery manual doesn't match the code.**
+The manual requires every step to be verified for real. If you find a mismatch, have the tech writer rerun that step. If the code itself is wrong, route it to the owner — don't patch the manual to paper over it.
 
-**Q：能用来做非软件项目吗？**
-不建议。角色、契约、测试这些概念是按软件开发设计的，硬套会别扭。
+**Q: Can I use it for non-software projects?**
+Not really. Roles, contracts, and tests are designed around software development; forcing them elsewhere gets awkward.
 
-**Q：安全吗？权限会不会太大？**
-开发、测试、安全、文档这几个角色有 Bash 权限，能执行构建和测试。首次运行时会请求命令权限，逐条看清楚再批。不要把生产凭据放进会话，也不要在没有备份的目录里跑。
+**Q: Is it safe? Aren't the permissions too broad?**
+The developer, tester, security, and tech writer roles have Bash access, so they can run builds and tests. You'll be asked to approve commands on first run — read each one. Don't put production credentials in the session, and don't run it in a directory without backups.
 
-**Q：会不会陷入死循环？**
-有硬预算：同一动作同一错误连续两次就停，单任务最多三次尝试，评审返工最多两轮，连续两次无进展也算卡住。到线后写 `07-project/blocked.md`，把未完成项和选项交给你，不会无限重试。
+**Q: Can it get stuck in a loop?**
+It has hard budgets: the same action with the same error twice stops it, one task gets at most three attempts, review rework at most two rounds, and two consecutive no-progress rounds also count as stuck. At the limit it writes `07-project/blocked.md` and hands you the unfinished items and options. No endless retries.
 
-**Q：已经有一个项目，目录结构和这个 skill 不一样，要改吗？**
-不用改。它会先读代码、跑构建和测试、盘点现有文档，产出 `07-project/audit.md`；文档放在独立的 `docs/dev-team/`，原目录不移动、不重命名。之后只按本次变更范围迭代。
+**Q: I already have a project whose layout differs from this skill. Do I need to restructure it?**
+No. It reads the code, runs the build and tests, audits existing docs, and writes `07-project/audit.md`. Documentation goes into a separate `docs/dev-team/`; the original directory is never moved or renamed. After that it only iterates within the current change scope.
 
-**Q：能在 Cursor、Codex 或 DeepSeek 这类工具里用吗？**
-能，但安装脚本只覆盖 Claude Code。其他工具按 3.6 的通用接法手动接入；角色文件里的 tools、model 字段要按那个工具的机制改写。
+**Q: Can I use it in Cursor, Codex, or DeepSeek?**
+Yes, but the install scripts only cover Claude Code. Wire other tools by hand as described in 3.6; the tools and model fields in the role files need rewriting for each tool's mechanism.
 
-## 11. 卸载
+## 11. Uninstall
 
-在 skill 目录下执行：
+From the skill directory:
 
 ```bash
 bash scripts/uninstall.sh
 ```
 
-项目级：
+Project-level:
 
 ```bash
 bash scripts/uninstall.sh --project ../my-project
 ```
 
-脚本只删指向本 skill 的软链接。同名但不是软链接的文件会保留并提示。项目里已经生成的 `docs/` 和代码不受影响。
+The script only removes symlinks that point at this skill. Same-named files that aren't symlinks stay, with a notice. Generated `docs/` and your code are untouched.
 
-上面的脚本只处理 Claude Code 的两个目录。用其他工具时，删掉你手动放进项目的 `.dev-team/` 和对应的规则文件即可。
+Those scripts only handle Claude Code's two directories. For other tools, delete the `.dev-team/` you placed in the project and the rule file you added.
 
-如果 skill 目录已经被删了，脚本也就没了，手动清理这两个位置：
+If the skill directory is already gone, the script is gone with it. Clean up the two locations by hand:
 
 ```bash
 rm ~/.claude/skills/dev-team
 rm ~/.claude/agents/{project-manager,product-manager,interaction-designer,architect,developer,test-engineer,security-engineer,tech-writer,red-team}.md
 ```
 
-## 12. 限制
+## 12. Limits
 
-- 子 agent 之间不共享对话记忆，只靠文件交接。所以每个产出物的质量决定了下游能不能接住。
-- 并发受模型速率和成本限制，波次别开太宽。
-- 角色的判断是模型判断，不是真正的领域专家。安全结论、合规结论、架构决策，仍然需要人来签字。
-- 交付手册要求实测，agent 在它拿不到的环境里验证不了，会在报告里标出来，最后需要人补。
-- 跨工具使用时，子 agent 并发和自动触发能力取决于宿主工具，不在本 skill 的控制范围内。
-- 已有项目的盘点基于代码和现有文档，历史背景缺失时可能判断错。盘点结论需要你确认一次，之后才开始改。
-- 预算是硬约束，但不保证识别所有卡点。发现它在原地打转时，直接叫停。
+- Subagents don't share conversational memory; they hand off through files. So the quality of each artifact decides whether the next stage can pick it up.
+- Parallelism is bounded by model rate limits and cost. Don't open a wave too wide.
+- Role judgment is model judgment, not real domain expertise. Security findings, compliance findings, and architecture decisions still need a human signature.
+- The delivery manual requires hands-on verification. Agents can't verify environments they can't reach and will flag that in the report; a human fills the gap.
+- In other tools, subagent parallelism and auto-triggering depend on the host. Outside this skill's control.
+- The audit of an existing project is based on code and current docs. Missing history can lead to wrong conclusions. Confirm the audit once before changes begin.
+- Budgets are hard limits but don't catch every dead end. If you see it spinning in place, call a stop.
